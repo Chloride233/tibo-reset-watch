@@ -20,6 +20,7 @@ struct TiboResetNotifierMain {
 @MainActor
 final class NotifierAppDelegate: NSObject, NSApplicationDelegate {
     private let pollInterval: TimeInterval = 120
+    private let welcomeKey = "hasShownWelcome"
     private let seenAlerts = SeenAlertStore()
     private let notificationCenter = UNUserNotificationCenter.current()
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -32,6 +33,7 @@ final class NotifierAppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         configureMenuBar()
+        showWelcomeIfNeeded()
         notificationCenter.requestAuthorization(options: [.alert, .sound]) { _, _ in }
         poll()
 
@@ -91,6 +93,19 @@ final class NotifierAppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(.separator())
         menu.addItem(quitItem)
         statusItem.menu = menu
+    }
+
+    private func showWelcomeIfNeeded() {
+        guard !UserDefaults.standard.bool(forKey: welcomeKey) else { return }
+
+        UserDefaults.standard.set(true, forKey: welcomeKey)
+
+        let alert = NSAlert()
+        alert.messageText = "Tibo Reset Watch 已启动"
+        alert.informativeText = "它正在菜单栏运行。请在屏幕右上角寻找铃铛图标；首次运行请允许系统通知。"
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "知道了")
+        alert.runModal()
     }
 
     private func poll() {

@@ -43,7 +43,7 @@ make app
 open "dist/Tibo Reset Notifier.app"
 ```
 
-The generated app is local and unsigned. You can add it to macOS Login Items after verifying that it works for you.
+The generated app is locally ad-hoc signed, but not notarized with a Developer ID. You can add it to macOS Login Items after verifying that it works for you.
 
 ## Data source and limitations
 
