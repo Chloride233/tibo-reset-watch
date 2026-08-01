@@ -2,13 +2,15 @@
 
 Independent, local-first reset alerts for public posts from `@thsottiaux`.
 
-> **Current release:** macOS 13+ menu-bar app. Windows and Linux support are planned, not implemented.
+> **Current release:** v0.3, a macOS 13+ menu-bar app. Windows and Linux support are planned, not implemented.
 
 Tibo Reset Watch polls a public reset feed every two minutes, classifies new posts, and shows a native macOS notification for either a likely upcoming reset or a confirmed reset. It does not require an X, OpenAI, or Telegram login, and it never reads a user's Codex usage.
 
 ## What it does
 
 - Shows a small menu-bar bell instead of keeping a browser tab open.
+- Accepts only canonical posts authored by `@thsottiaux`; other accounts and non-Tibo events are excluded.
+- Shows Tibo's latest accepted timeline post in the menu even when it is unrelated to resets.
 - Separates **possible reset signals** from **confirmed resets**.
 - Silently establishes a baseline on first launch, so old posts are never replayed as alerts.
 - Lets a signal alert upgrade to a second confirmation alert for the same post.
@@ -37,7 +39,7 @@ cd tibo-reset-watch
 make run
 ```
 
-Allow notifications on the first launch. The bell menu shows the current source health, lets you choose an alert condition, and includes **立即检查**, **打开最新**, and **发送测试通知**. Changing the alert condition only affects future posts; old suppressed signals are not replayed later.
+Allow notifications on the first launch. The bell menu shows the latest Tibo post and its source time, lets you choose an alert condition, and includes **立即检查** and **发送测试通知**. Click **打开最新动态** to open the exact X post. Changing the alert condition only affects future posts; old suppressed signals are not replayed later.
 
 To build and install a daily-use app bundle into `~/Applications`:
 
@@ -45,7 +47,7 @@ To build and install a daily-use app bundle into `~/Applications`:
 make install
 ```
 
-This replaces only `~/Applications/Tibo Reset Watch.app`, locally re-signs it, and launches it. It does not add a Login Item automatically. The app is ad-hoc signed rather than notarized with a Developer ID, so only install the bundle you built from source after reviewing it.
+This closes and replaces only `~/Applications/Tibo Reset Watch.app`, locally re-signs it, and launches it. It does not add a Login Item automatically. The app is ad-hoc signed rather than notarized with a Developer ID, so only install the bundle you built from source after reviewing it.
 
 For a build artifact without installing it:
 
@@ -56,7 +58,9 @@ open "dist/Tibo Reset Watch.app"
 
 ## Data source and limitations
 
-The current source is the independent public endpoint at <https://codex-reset.com/api/feed>, not an OpenAI or X API. If that feed is stale, unavailable, or wrong, the app does not invent an alert. Treat the original X post and your Codex client as the source of truth.
+The current source is the independent public endpoint at <https://codex-reset.com/api/feed>, not an OpenAI or X API. The app requires the payload to identify itself as the `thsottiaux` timeline, then accepts only canonical URLs shaped like `x.com/thsottiaux/status/<same-id>`. Tibo's replies and quote-posts qualify when he authored their canonical status URL; posts authored by OpenAI, OpenAI Status, or community accounts do not.
+
+The upstream service says it syncs about every 15 minutes, so this is not a real-time X stream. If the feed is stale, unavailable, or fails the author checks, the app does not invent an alert. Treat the original X post and your Codex client as the source of truth.
 
 This project is independent and is not affiliated with OpenAI, X, or Thibault “Tibo” Sottiaux.
 
@@ -67,12 +71,12 @@ make test
 make app
 ```
 
-`make test` is a zero-dependency self-check that validates the public feed JSON shape, confirmed resets, future reset signals, common false-positive exclusions, and retry-backoff limits.
+`make test` is a zero-dependency self-check that validates the Tibo timeline identity, canonical post authorship, public feed JSON shape, reset classification, false-positive exclusions, and retry-backoff limits.
 
 ## Roadmap
 
 - [x] Native macOS menu-bar notifier
-- [x] Feed parsing, conservative reset classification, and local deduplication
+- [x] Tibo-only author validation, conservative reset classification, and local deduplication
 - [x] Bounded retry backoff, notification deep links, alert preferences, and a local installer
 - [ ] Cross-platform desktop client
 - [ ] Optional official X API adapter for lower-latency, independent ingestion

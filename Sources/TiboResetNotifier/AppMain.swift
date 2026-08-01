@@ -28,7 +28,7 @@ final class NotifierAppDelegate: NSObject, NSApplicationDelegate, UNUserNotifica
     private let menu = NSMenu()
     private let statusLine = NSMenuItem(title: "正在启动…", action: nil, keyEquivalent: "")
     private let sourceLine = NSMenuItem(title: "数据源：正在连接…", action: nil, keyEquivalent: "")
-    private let latestPostItem = NSMenuItem(title: "暂时没有 reset 信号", action: nil, keyEquivalent: "")
+    private let latestPostItem = NSMenuItem(title: "正在获取 Tibo 最新动态…", action: nil, keyEquivalent: "")
     private let alertModeItem = NSMenuItem(title: "提醒条件", action: nil, keyEquivalent: "")
 
     private var timer: Timer?
@@ -185,9 +185,17 @@ final class NotifierAppDelegate: NSObject, NSApplicationDelegate, UNUserNotifica
             return
         }
 
+        let tiboPosts = snapshot.tweets.filter {
+            $0.isAuthored(by: FeedClient.expectedHandle)
+        }
+        guard snapshot.tweets.isEmpty || !tiboPosts.isEmpty else {
+            handleFailure("Feed 中没有通过作者校验的帖子", sourceStatus: "作者校验失败")
+            return
+        }
+
         consecutiveFailures = 0
-        setSourceStatus("正常 · codex-reset.com · " + timeString())
-        consume(snapshot)
+        setSourceStatus(sourceStatusText(for: tiboPosts.first))
+        consume(tiboPosts)
         scheduleNextPoll(after: PollingPolicy.normalInterval)
     }
 
@@ -207,9 +215,9 @@ final class NotifierAppDelegate: NSObject, NSApplicationDelegate, UNUserNotifica
         scheduleNextPoll(after: retryInterval)
     }
 
-    private func consume(_ snapshot: FeedSnapshot) {
-        let alerts = snapshot.tweets.compactMap(ResetClassifier.classify)
-        updateLatestPost(using: alerts.first)
+    private func consume(_ tiboPosts: [FeedPost]) {
+        updateLatestPost(using: tiboPosts.first)
+        let alerts = tiboPosts.compactMap(ResetClassifier.classify)
 
         guard seenAlerts.hasPrimed else {
             seenAlerts.prime(with: alerts)
@@ -242,11 +250,18 @@ final class NotifierAppDelegate: NSObject, NSApplicationDelegate, UNUserNotifica
         }
     }
 
-    private func updateLatestPost(using alert: ResetAlert?) {
-        guard let alert else { return }
+    private func updateLatestPost(using post: FeedPost?) {
+        guard let post else {
+            latestPostURL = nil
+            latestPostItem.title = "未获取到 Tibo 动态"
+            latestPostItem.toolTip = nil
+            latestPostItem.isEnabled = false
+            return
+        }
 
-        latestPostURL = alert.post.url
-        latestPostItem.title = "打开最新：" + alert.level.menuLabel
+        latestPostURL = post.url
+        latestPostItem.title = "打开最新动态：" + compactText(post.text, limit: 48)
+        latestPostItem.toolTip = post.text
         latestPostItem.isEnabled = true
     }
 
@@ -271,13 +286,37 @@ final class NotifierAppDelegate: NSObject, NSApplicationDelegate, UNUserNotifica
     }
 
     private func notificationBody(for text: String) -> String {
+        compactText(text, limit: 240)
+    }
+
+    private func compactText(_ text: String, limit: Int) -> String {
         let oneLine = text
             .split(whereSeparator: \.isNewline)
             .joined(separator: " ")
-        let limit = 240
 
         guard oneLine.count > limit else { return oneLine }
         return "\(oneLine.prefix(limit - 1))…"
+    }
+
+    private func sourceStatusText(for post: FeedPost?) -> String {
+        guard let time = formattedPostTime(post?.at) else {
+            return post == nil ? "正常 · 暂无 Tibo 动态" : "正常 · Tibo 时间线"
+        }
+        return "正常 · Tibo 最新 " + time
+    }
+
+    private func formattedPostTime(_ value: String?) -> String? {
+        guard let value else { return nil }
+
+        let fractionalParser = ISO8601DateFormatter()
+        fractionalParser.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let date = fractionalParser.date(from: value) ?? ISO8601DateFormatter().date(from: value)
+        guard let date else { return nil }
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_CN")
+        formatter.dateFormat = Calendar.current.isDateInToday(date) ? "今天 HH:mm" : "MM-dd HH:mm"
+        return formatter.string(from: date)
     }
 
     private func scheduleNextPoll(after interval: TimeInterval) {

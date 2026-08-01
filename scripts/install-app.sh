@@ -11,6 +11,10 @@ if [[ ! -d "$source_app" ]]; then
 fi
 
 mkdir -p "$target_dir"
+if [[ -d "$target_app" ]]; then
+    osascript -e 'tell application id "local.tibo-reset-notifier" to quit' >/dev/null 2>&1 || true
+    sleep 1
+fi
 rm -rf "$target_app"
 ditto "$source_app" "$target_app"
 xattr -cr "$target_app"
