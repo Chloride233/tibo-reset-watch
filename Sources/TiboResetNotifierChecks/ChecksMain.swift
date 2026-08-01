@@ -48,6 +48,30 @@ struct TiboResetNotifierChecks {
             failures: &failures
         )
 
+        expect(
+            PollingPolicy.retryInterval(afterConsecutiveFailures: 1) == 60,
+            "first failed check retries in one minute",
+            failures: &failures
+        )
+
+        expect(
+            PollingPolicy.retryInterval(afterConsecutiveFailures: 2) == 120,
+            "second failed check backs off to two minutes",
+            failures: &failures
+        )
+
+        expect(
+            PollingPolicy.retryInterval(afterConsecutiveFailures: 4) == 480,
+            "retries grow exponentially",
+            failures: &failures
+        )
+
+        expect(
+            PollingPolicy.retryInterval(afterConsecutiveFailures: 8) == 900,
+            "retry interval is capped at fifteen minutes",
+            failures: &failures
+        )
+
         do {
             let data = Data("""
             {
@@ -81,7 +105,7 @@ struct TiboResetNotifierChecks {
             exit(1)
         }
 
-        print("PASS: 8 notifier checks")
+        print("PASS: 12 notifier checks")
     }
 
     private static func expect(

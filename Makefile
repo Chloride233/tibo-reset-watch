@@ -1,4 +1,4 @@
-.PHONY: run test app
+.PHONY: run test app install
 
 run:
 	swift run TiboResetNotifier
@@ -8,3 +8,6 @@ test:
 
 app:
 	./scripts/build-app.sh
+
+install: app
+	./scripts/install-app.sh

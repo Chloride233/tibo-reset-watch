@@ -6,6 +6,7 @@ final class SeenAlertStore {
     private enum Key {
         static let hasPrimed = "hasPrimed"
         static let alertKeys = "alertKeys"
+        static let alertMode = "alertMode"
     }
 
     private let defaults: UserDefaults
@@ -16,6 +17,15 @@ final class SeenAlertStore {
 
     var hasPrimed: Bool {
         defaults.bool(forKey: Key.hasPrimed)
+    }
+
+    var alertMode: AlertMode {
+        get {
+            AlertMode(rawValue: defaults.string(forKey: Key.alertMode) ?? "") ?? .possibleAndConfirmed
+        }
+        set {
+            defaults.set(newValue.rawValue, forKey: Key.alertMode)
+        }
     }
 
     func prime(with alerts: [ResetAlert]) {

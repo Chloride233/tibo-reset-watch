@@ -2,7 +2,7 @@
 set -euo pipefail
 
 project_dir="$(cd "$(dirname "$0")/.." && pwd)"
-app_dir="$project_dir/dist/Tibo Reset Notifier.app"
+app_dir="$project_dir/dist/Tibo Reset Watch.app"
 
 cd "$project_dir"
 swift build -c release
