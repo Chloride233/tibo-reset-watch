@@ -8,7 +8,7 @@
   "scripts": {
     "start": "electron .",
     "windows:build": "electron-builder --win --x64 --publish never",
-    "web:check": "node --check web/app.js",
+    "web:check": "node --check web/config.js && node --check web/app.js && node --check web/sw.js",
     "stream:check": "node --check server/stream-worker.cjs",
     "stream:start": "node server/stream-worker.cjs"
   },

@@ -9,9 +9,13 @@ const refs = {
   checkNow: document.getElementById("check-now"),
   enableNotifications: document.getElementById("enable-notifications"),
   updatedMeta: document.getElementById("updated-meta"),
+  sourceProvider: document.getElementById("source-provider"),
+  feedFreshness: document.getElementById("feed-freshness"),
+  nextCheck: document.getElementById("next-check"),
   latestTime: document.getElementById("latest-time"),
   latestText: document.getElementById("latest-text"),
   latestLink: document.getElementById("latest-link"),
+  latestPostKind: document.getElementById("latest-post-kind"),
   alertMode: document.getElementById("alert-mode"),
   alertCount: document.getElementById("alert-count"),
   alertsList: document.getElementById("alerts-list"),
@@ -27,6 +31,9 @@ const state = {
   polling: false,
   failures: 0,
   timer: null,
+  countdownTimer: null,
+  nextPollAt: null,
+  feedFetchedAt: null,
   posts: [],
   alerts: [],
   primed: false,
@@ -166,6 +173,45 @@ function formatCheckedTime() {
   }).format(new Date());
 }
 
+function formatFreshness(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+
+  const seconds = Math.max(0, Math.round((Date.now() - date.getTime()) / 1_000));
+  if (seconds < 45) return "刚刚更新";
+  if (seconds < 3_600) return `${Math.round(seconds / 60)} 分钟前`;
+  if (seconds < 86_400) return `${Math.round(seconds / 3_600)} 小时前`;
+  return `${Math.round(seconds / 86_400)} 天前`;
+}
+
+function sourcePresentation(snapshot) {
+  const source = String(snapshot.source || "").toLowerCase();
+  if (source === "x-filtered-stream") {
+    return { label: "X 实时流", cadence: "实时流已连接，客户端每 2 分钟确认一次" };
+  }
+  if (source === "vps-push") {
+    return { label: "公开同步源", cadence: "公开源约每 15 分钟同步" };
+  }
+  return { label: snapshot.source || "公开 Feed", cadence: "客户端每 2 分钟检查一次" };
+}
+
+function updateCountdown() {
+  if (state.polling) {
+    refs.nextCheck.textContent = "检查中";
+  } else if (!state.nextPollAt) {
+    refs.nextCheck.textContent = "—";
+  } else {
+    const seconds = Math.max(0, Math.ceil((state.nextPollAt - Date.now()) / 1_000));
+    const minutes = Math.floor(seconds / 60);
+    refs.nextCheck.textContent = seconds === 0
+      ? "即将检查"
+      : `${minutes}:${String(seconds % 60).padStart(2, "0")}`;
+  }
+
+  if (state.feedFetchedAt) refs.feedFreshness.textContent = formatFreshness(state.feedFetchedAt);
+}
+
 function setSourceState(text, status = "loading") {
   refs.sourceState.textContent = text;
   refs.sourceIndicator.dataset.state = status;
@@ -200,24 +246,35 @@ function updateLatest(posts) {
   if (!post) {
     refs.latestTime.textContent = "—";
     refs.latestText.textContent = "当前没有可展示的 Tibo 动态。";
+    refs.latestPostKind.textContent = "等待动态";
+    refs.latestPostKind.dataset.level = "other";
     refs.latestLink.hidden = true;
     return;
   }
 
+  const signal = classify(post);
   refs.latestTime.textContent = formatTime(post.at);
   refs.latestText.textContent = compactText(post.text, 220);
+  refs.latestPostKind.textContent = signal?.level === "confirmed"
+    ? "Confirmed reset"
+    : signal?.level === "upcoming" ? "Possible reset" : "普通动态";
+  refs.latestPostKind.dataset.level = signal?.level || "other";
   refs.latestLink.href = post.url;
   refs.latestLink.hidden = false;
 }
 
 function updateSourceFacts(snapshot, posts) {
+  const presentation = sourcePresentation(snapshot);
+  state.feedFetchedAt = snapshot.fetched_at || null;
+  refs.sourceProvider.textContent = presentation.label;
+  refs.feedFreshness.textContent = formatFreshness(state.feedFetchedAt);
   refs.profileHandle.textContent = `@${snapshot.profile.handle}`;
-  refs.sourceScope.textContent = snapshot.source_scope;
+  refs.sourceScope.textContent = "Tibo 本人时间线";
   refs.lastChecked.textContent = formatCheckedTime();
-  refs.retryState.textContent = "正常 · 2 分钟轮询";
+  refs.retryState.textContent = "连接正常";
   refs.updatedMeta.textContent = posts[0]?.at
-    ? `最新帖子 ${formatTime(posts[0].at)} · 上游约每 15 分钟同步`
-    : "没有可展示的 Tibo 动态 · 上游约每 15 分钟同步";
+    ? `最新动态 ${formatTime(posts[0].at)} · ${presentation.cadence}`
+    : `暂无可展示动态 · ${presentation.cadence}`;
 }
 
 function createAlertRow(alert) {
@@ -293,11 +350,21 @@ function notifyAlert(alert) {
 function updateNotificationButton() {
   if (!("Notification" in window)) {
     refs.enableNotifications.textContent = "浏览器不支持通知";
+    refs.enableNotifications.dataset.state = "unsupported";
+    refs.enableNotifications.setAttribute("aria-pressed", "false");
     refs.enableNotifications.disabled = true;
   } else if (Notification.permission === "granted") {
-    refs.enableNotifications.textContent = "系统通知已开启";
+    refs.enableNotifications.textContent = "通知已开启";
+    refs.enableNotifications.dataset.state = "granted";
+    refs.enableNotifications.setAttribute("aria-pressed", "true");
   } else if (Notification.permission === "denied") {
     refs.enableNotifications.textContent = "通知已被浏览器拒绝";
+    refs.enableNotifications.dataset.state = "denied";
+    refs.enableNotifications.setAttribute("aria-pressed", "false");
+  } else {
+    refs.enableNotifications.textContent = "开启系统通知";
+    refs.enableNotifications.dataset.state = "default";
+    refs.enableNotifications.setAttribute("aria-pressed", "false");
   }
 }
 
@@ -309,6 +376,8 @@ async function requestNotifications() {
 
 function scheduleNext(delayMs) {
   window.clearTimeout(state.timer);
+  state.nextPollAt = Date.now() + delayMs;
+  updateCountdown();
   state.timer = window.setTimeout(() => poll(), delayMs);
 }
 
@@ -317,6 +386,8 @@ async function poll() {
   state.polling = true;
   refs.checkNow.disabled = true;
   refs.checkNow.textContent = "检查中…";
+  state.nextPollAt = null;
+  updateCountdown();
   setSourceState("正在读取 Tibo timeline", "loading");
 
   try {
@@ -354,7 +425,8 @@ async function poll() {
     const delay = retryIntervalMs(state.failures);
     const minutes = Math.round(delay / 60_000);
     refs.lastChecked.textContent = formatCheckedTime();
-    refs.retryState.textContent = `${minutes} 分钟后重试`;
+    refs.retryState.textContent = `第 ${state.failures} 次失败`;
+    refs.feedFreshness.textContent = "读取失败";
     setSourceState("连接失败", "error");
     setError(`${error.message || "未知错误"} · ${minutes} 分钟后自动重试`);
     scheduleNext(delay);
@@ -368,6 +440,7 @@ async function poll() {
 function bind() {
   readStoredState();
   updateNotificationButton();
+  state.countdownTimer = window.setInterval(updateCountdown, 1_000);
   refs.checkNow.addEventListener("click", () => poll());
   refs.enableNotifications.addEventListener("click", requestNotifications);
   refs.alertMode.addEventListener("change", () => {
@@ -380,6 +453,9 @@ function bind() {
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").catch(() => {});
   }
+
+  window.addEventListener("pagehide", () => window.clearInterval(state.countdownTimer));
+  window.requestAnimationFrame(() => { document.body.dataset.ready = "true"; });
 }
 
 bind();

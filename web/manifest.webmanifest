@@ -7,5 +7,12 @@
   "background_color": "#101719",
   "theme_color": "#101719",
   "lang": "zh-CN",
-  "icons": []
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
