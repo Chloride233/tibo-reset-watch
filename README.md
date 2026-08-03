@@ -2,7 +2,7 @@
 
 Independent, local-first reset alerts for public posts from `@thsottiaux`.
 
-> **Current release:** v0.3 macOS app plus a web/PWA client, a Windows Electron target, and an optional X realtime stream worker. The macOS app and browser client are verified locally; Windows packaging and credentialed X streaming still need their platform checks.
+> **Current release:** v0.3 macOS app plus a web/PWA client, a Windows Electron target, and an optional X realtime stream worker. The macOS app, browser client, and Windows packaging are verified; Windows desktop runtime and credentialed X streaming still need their platform checks.
 
 Tibo Reset Watch polls a public reset feed every two minutes, classifies new posts, and shows a native notification for either a likely upcoming reset or a confirmed reset. The same Tibo-only contract powers the macOS app, browser PWA, and Windows shell. It does not require an X, OpenAI, or Telegram login, and it never reads a user's Codex usage.
 
@@ -81,7 +81,7 @@ npm start
 npm run windows:build
 ```
 
-`npm run windows:build` produces NSIS and portable artifacts in `dist-windows/`. The repository contains the target configuration, but this macOS workspace has not yet executed a Windows installer or Windows runtime smoke test.
+`npm run windows:build` produces NSIS and portable artifacts in `dist-windows/`. GitHub Actions verifies that packaging on `windows-latest`; this macOS workspace has not yet run the installer or a Windows desktop runtime smoke test.
 
 ## Data source and limitations
 
@@ -112,7 +112,8 @@ GitHub Actions runs the macOS self-check, browser/worker checks, and a Windows i
 - [x] Browser/PWA client with the same Tibo-only feed contract
 - [x] Windows Electron shell and NSIS/portable packaging configuration
 - [x] Optional server-side X Filtered Stream worker with a normalized feed endpoint
-- [ ] Windows installer/runtime validation on Windows CI or a Windows machine
+- [x] Windows installer and portable packaging on Windows CI
+- [ ] Windows installer/runtime smoke test on a Windows machine
 - [ ] Credentialed X stream integration and deployment validation
 - [ ] Optional official X API adapter for lower-latency, independent ingestion
 
