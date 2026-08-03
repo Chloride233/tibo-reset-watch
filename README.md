@@ -60,14 +60,16 @@ open "dist/Tibo Reset Watch.app"
 
 ### Web / PWA
 
-The browser client has no build step and reads the public feed directly. For local development:
+The browser client has no build step and reads the public feed directly. You can try the hosted client at <https://chloride233.github.io/tibo-reset-watch/>. Browser notifications are optional and only fire while the page is open.
+
+For local development:
 
 ```sh
 make web
 open http://localhost:8080
 ```
 
-It can be hosted as a static site (including GitHub Pages). Browser notifications are optional and only fire while the page is open. The page keeps its alert deduplication and alert-mode preference in local storage.
+The page keeps its alert deduplication and alert-mode preference in local storage. The hosted page uses HTTPS, so browser notification permission can be requested there.
 
 To use an official X realtime source, run the optional server-side worker described in [`server/README.md`](server/README.md). It owns the Bearer Token, listens for `from:thsottiaux -is:retweet`, bootstraps the latest timeline, and exposes the same normalized `/api/feed` contract. Point `web/config.js` at that endpoint for the browser/Windows client; point macOS at it with `defaults write local.tibo-reset-notifier feedEndpoint https://your-worker.example.com/api/feed`. The clients never receive the Bearer Token.
 
