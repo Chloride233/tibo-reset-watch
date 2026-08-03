@@ -7,7 +7,7 @@
   "main": "windows/main.cjs",
   "scripts": {
     "start": "electron .",
-    "windows:build": "electron-builder --win --x64",
+    "windows:build": "electron-builder --win --x64 --publish never",
     "web:check": "node --check web/app.js",
     "stream:check": "node --check server/stream-worker.cjs",
     "stream:start": "node server/stream-worker.cjs"
