@@ -121,4 +121,4 @@ GitHub Actions runs the macOS self-check, browser/worker checks, and a Windows i
 
 ## License
 
-No open-source license has been selected yet. The repository is public for review and feedback; reuse rights are not granted until a license is added.
+This project is available under the [MIT License](LICENSE).
