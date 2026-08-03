@@ -1,7 +1,7 @@
 {
   "name": "Tibo Reset Watch",
   "short_name": "Tibo Reset",
-  "description": "只追踪 @thsottiaux 本人动态，涉及 Codex reset 时提醒。",
+  "description": "只看 @thsottiaux 本人发布的动态。他提到 Codex reset 时，浏览器会提醒你。",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#101719",

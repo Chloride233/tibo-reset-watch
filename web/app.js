@@ -153,7 +153,7 @@ function compactText(text, limit = 240) {
   return oneLine.length > limit ? `${oneLine.slice(0, limit - 1)}…` : oneLine;
 }
 
-function formatTime(value, fallback = "—") {
+function formatTime(value, fallback = "等待中") {
   if (!value) return fallback;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return fallback;
@@ -174,9 +174,9 @@ function formatCheckedTime() {
 }
 
 function formatFreshness(value) {
-  if (!value) return "—";
+  if (!value) return "等待中";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return "等待中";
 
   const seconds = Math.max(0, Math.round((Date.now() - date.getTime()) / 1_000));
   if (seconds < 45) return "刚刚更新";
@@ -188,19 +188,19 @@ function formatFreshness(value) {
 function sourcePresentation(snapshot) {
   const source = String(snapshot.source || "").toLowerCase();
   if (source === "x-filtered-stream") {
-    return { label: "X 实时流", cadence: "实时流已连接，客户端每 2 分钟确认一次" };
+    return { label: "X 实时流", cadence: "X 会实时推送新动态，页面每 2 分钟再确认一次" };
   }
   if (source === "vps-push") {
-    return { label: "公开同步源", cadence: "公开源约每 15 分钟同步" };
+    return { label: "公开数据源", cadence: "数据通常每 15 分钟更新" };
   }
-  return { label: snapshot.source || "公开 Feed", cadence: "客户端每 2 分钟检查一次" };
+  return { label: snapshot.source || "公开数据源", cadence: "页面每 2 分钟检查一次" };
 }
 
 function updateCountdown() {
   if (state.polling) {
     refs.nextCheck.textContent = "检查中";
   } else if (!state.nextPollAt) {
-    refs.nextCheck.textContent = "—";
+    refs.nextCheck.textContent = "等待中";
   } else {
     const seconds = Math.max(0, Math.ceil((state.nextPollAt - Date.now()) / 1_000));
     const minutes = Math.floor(seconds / 60);
@@ -227,16 +227,16 @@ function retryIntervalMs(failureCount) {
 }
 
 function validateSnapshot(snapshot) {
-  if (snapshot.stale) throw new Error("Feed 标记为过期");
+  if (snapshot.stale) throw new Error("数据源已经过期");
   if (snapshot.source_scope?.toLowerCase() !== "timeline" ||
       snapshot.profile?.handle?.toLowerCase() !== TIBO_HANDLE) {
-    throw new Error("Feed 身份不是 @thsottiaux timeline");
+    throw new Error("数据源不是 @thsottiaux 本人的时间线");
   }
 
   const sourcePosts = Array.isArray(snapshot.tweets) ? snapshot.tweets : [];
   const posts = sourcePosts.filter(isTiboPost);
   if (sourcePosts.length > 0 && posts.length === 0) {
-    throw new Error("Feed 中没有通过作者校验的帖子");
+    throw new Error("没有找到由 Tibo 本人发布的帖子");
   }
   return posts;
 }
@@ -244,9 +244,9 @@ function validateSnapshot(snapshot) {
 function updateLatest(posts) {
   const post = posts[0];
   if (!post) {
-    refs.latestTime.textContent = "—";
-    refs.latestText.textContent = "当前没有可展示的 Tibo 动态。";
-    refs.latestPostKind.textContent = "等待动态";
+    refs.latestTime.textContent = "等待中";
+    refs.latestText.textContent = "暂时还没有 Tibo 的动态。";
+    refs.latestPostKind.textContent = "还没有新动态";
     refs.latestPostKind.dataset.level = "other";
     refs.latestLink.hidden = true;
     return;
@@ -256,8 +256,8 @@ function updateLatest(posts) {
   refs.latestTime.textContent = formatTime(post.at);
   refs.latestText.textContent = compactText(post.text, 220);
   refs.latestPostKind.textContent = signal?.level === "confirmed"
-    ? "Confirmed reset"
-    : signal?.level === "upcoming" ? "Possible reset" : "普通动态";
+    ? "已经确认重置"
+    : signal?.level === "upcoming" ? "可能重置" : "普通动态";
   refs.latestPostKind.dataset.level = signal?.level || "other";
   refs.latestLink.href = post.url;
   refs.latestLink.hidden = false;
@@ -269,12 +269,12 @@ function updateSourceFacts(snapshot, posts) {
   refs.sourceProvider.textContent = presentation.label;
   refs.feedFreshness.textContent = formatFreshness(state.feedFetchedAt);
   refs.profileHandle.textContent = `@${snapshot.profile.handle}`;
-  refs.sourceScope.textContent = "Tibo 本人时间线";
+  refs.sourceScope.textContent = "Tibo 本人发布的动态";
   refs.lastChecked.textContent = formatCheckedTime();
   refs.retryState.textContent = "连接正常";
   refs.updatedMeta.textContent = posts[0]?.at
-    ? `最新动态 ${formatTime(posts[0].at)} · ${presentation.cadence}`
-    : `暂无可展示动态 · ${presentation.cadence}`;
+    ? `最近一条发布于 ${formatTime(posts[0].at)} · ${presentation.cadence}`
+    : `暂时没有动态 · ${presentation.cadence}`;
 }
 
 function createAlertRow(alert) {
@@ -285,7 +285,7 @@ function createAlertRow(alert) {
   head.className = "alert-head";
   const kind = document.createElement("span");
   kind.className = "alert-kind";
-  kind.textContent = alert.level === "confirmed" ? "CONFIRMED RESET" : "POSSIBLE RESET";
+  kind.textContent = alert.level === "confirmed" ? "已经确认重置" : "可能重置";
   const time = document.createElement("time");
   time.dateTime = alert.post.at || "";
   time.textContent = formatTime(alert.post.at);
@@ -311,15 +311,15 @@ function renderAlerts() {
   const visible = state.mode === "confirmedOnly"
     ? state.alerts.filter((alert) => alert.level === "confirmed")
     : state.alerts;
-  refs.alertCount.textContent = `${visible.length} 条信号`;
+  refs.alertCount.textContent = `${visible.length} 条 Reset 动态`;
 
   if (visible.length === 0) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
     const title = document.createElement("strong");
-    title.textContent = "还没有 reset 信号";
+    title.textContent = "还没有 Reset 动态";
     const body = document.createElement("span");
-    body.textContent = state.mode === "confirmedOnly" ? "当前只展示已经确认的 reset。" : "新信号会出现在这里。";
+    body.textContent = state.mode === "confirmedOnly" ? "这里现在只显示已经确认的重置。" : "Tibo 提到 Reset 后，相关帖子会出现在这里。";
     empty.append(title, body);
     refs.alertsList.append(empty);
     refs.alertsList.setAttribute("aria-busy", "false");
@@ -338,7 +338,7 @@ function notifyAlert(alert) {
   if (!notificationAllowed(alert) || !("Notification" in window) || Notification.permission !== "granted") return;
 
   const notification = new Notification(
-    alert.level === "confirmed" ? "Tibo：Codex reset 已确认" : "Tibo：可能有 Codex reset",
+    alert.level === "confirmed" ? "Tibo 已确认 Codex reset" : "Tibo 可能要重置 Codex 额度",
     { body: compactText(alert.post.text), tag: `tibo-reset-${alert.key}` },
   );
   notification.onclick = () => {
@@ -358,11 +358,11 @@ function updateNotificationButton() {
     refs.enableNotifications.dataset.state = "granted";
     refs.enableNotifications.setAttribute("aria-pressed", "true");
   } else if (Notification.permission === "denied") {
-    refs.enableNotifications.textContent = "通知已被浏览器拒绝";
+    refs.enableNotifications.textContent = "浏览器不允许通知";
     refs.enableNotifications.dataset.state = "denied";
     refs.enableNotifications.setAttribute("aria-pressed", "false");
   } else {
-    refs.enableNotifications.textContent = "开启系统通知";
+    refs.enableNotifications.textContent = "开启浏览器通知";
     refs.enableNotifications.dataset.state = "default";
     refs.enableNotifications.setAttribute("aria-pressed", "false");
   }
@@ -388,11 +388,11 @@ async function poll() {
   refs.checkNow.textContent = "检查中…";
   state.nextPollAt = null;
   updateCountdown();
-  setSourceState("正在读取 Tibo timeline", "loading");
+  setSourceState("正在读取 Tibo 的动态", "loading");
 
   try {
     const response = await fetch(FEED_ENDPOINT, { cache: "no-store" });
-    if (!response.ok) throw new Error(`Feed HTTP ${response.status}`);
+    if (!response.ok) throw new Error(`数据源返回 HTTP ${response.status}`);
     const snapshot = await response.json();
     const posts = validateSnapshot(snapshot);
     const alerts = posts.map(classify).filter(Boolean);
@@ -403,7 +403,7 @@ async function poll() {
     updateLatest(posts);
     updateSourceFacts(snapshot, posts);
     renderAlerts();
-    setSourceState(`正常 · ${posts.length} 条 Tibo 动态`, "ok");
+    setSourceState(`已读取 ${posts.length} 条 Tibo 动态`, "ok");
     setError();
 
     if (!state.primed) {
@@ -425,10 +425,10 @@ async function poll() {
     const delay = retryIntervalMs(state.failures);
     const minutes = Math.round(delay / 60_000);
     refs.lastChecked.textContent = formatCheckedTime();
-    refs.retryState.textContent = `第 ${state.failures} 次失败`;
+    refs.retryState.textContent = `第 ${state.failures} 次读取失败`;
     refs.feedFreshness.textContent = "读取失败";
-    setSourceState("连接失败", "error");
-    setError(`${error.message || "未知错误"} · ${minutes} 分钟后自动重试`);
+    setSourceState("暂时无法连接", "error");
+    setError(`${error.message || "读取时出了点问题"}。系统将在 ${minutes} 分钟后重试。`);
     scheduleNext(delay);
   } finally {
     state.polling = false;

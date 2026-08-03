@@ -6,9 +6,9 @@
     <meta name="theme-color" content="#0d1415" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#f0f1eb" media="(prefers-color-scheme: light)" />
     <meta name="color-scheme" content="dark light" />
-    <meta name="description" content="Tibo Reset Watch：只追踪 @thsottiaux 本人动态，涉及 Codex reset 时提醒。" />
+    <meta name="description" content="只看 @thsottiaux 本人发布的动态。他提到 Codex reset 时，浏览器会提醒你。" />
     <meta property="og:title" content="Tibo Reset Watch" />
-    <meta property="og:description" content="只追踪 @thsottiaux 本人动态，涉及 Codex reset 时提醒。" />
+    <meta property="og:description" content="只看 @thsottiaux 本人发布的动态。他提到 Codex reset 时，浏览器会提醒你。" />
     <meta property="og:type" content="website" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="manifest" href="manifest.webmanifest" />
@@ -23,26 +23,26 @@
           <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
           <span>
             <strong>Tibo Reset Watch</strong>
-            <small>personal signal monitor</small>
+            <small>只看 Tibo 本人动态</small>
           </span>
         </a>
         <div class="source-indicator" id="source-indicator" data-state="loading" role="status" aria-live="polite">
           <span class="indicator-dot" aria-hidden="true"></span>
-          <span id="source-state">正在连接 feed</span>
+          <span id="source-state">正在连接数据源</span>
         </div>
       </header>
 
       <main id="main-content">
         <section class="intro-grid" aria-labelledby="page-title">
           <div class="intro-copy">
-            <p class="eyebrow">Tibo / reset monitor</p>
-            <h1 id="page-title">只看 Tibo。<br /><em>Reset 才响。</em></h1>
-            <p class="lede">保持安静地盯住本人时间线。普通动态留在这里，只有 reset 信号才打断你。</p>
+            <p class="eyebrow">@thsottiaux 动态提醒</p>
+            <h1 id="page-title">Tibo 的<br /><em>Reset 动态提醒</em></h1>
+            <p class="lede">这里只读取 @thsottiaux 本人发布的帖子。检测到 Codex reset 时，浏览器会提醒你。</p>
             <div class="action-row">
               <button class="button button-primary" id="check-now" type="button">立即检查</button>
-              <button class="button button-quiet" id="enable-notifications" type="button" aria-pressed="false">开启系统通知</button>
+              <button class="button button-quiet" id="enable-notifications" type="button" aria-pressed="false">开启浏览器通知</button>
             </div>
-            <p class="microcopy" id="updated-meta">等待第一次检查 · feed 约每 15 分钟同步</p>
+            <p class="microcopy" id="updated-meta">还没有检查 · 数据源通常每 15 分钟更新</p>
           </div>
 
           <article class="latest-panel" aria-label="Tibo 最新动态">
@@ -55,11 +55,11 @@
                 </span>
               </div>
               <div class="post-meta">
-                <span class="verified-mark">作者已校验</span>
-                <time class="post-time" id="latest-time">—</time>
+                <span class="verified-mark">Tibo 本人发布</span>
+                <time class="post-time" id="latest-time">等待中</time>
               </div>
             </div>
-            <blockquote class="latest-text" id="latest-text">正在读取 Tibo 的时间线…</blockquote>
+            <blockquote class="latest-text" id="latest-text">正在读取 Tibo 的动态…</blockquote>
             <div class="latest-footer">
               <span class="post-kind" id="latest-post-kind">最新动态</span>
               <a class="text-link" id="latest-link" target="_blank" rel="noopener noreferrer" hidden>在 X 查看原帖 <span aria-hidden="true">↗</span></a>
@@ -67,14 +67,14 @@
           </article>
         </section>
 
-        <section class="monitor-strip" aria-label="实时监听状态">
+        <section class="monitor-strip" aria-label="检查状态">
           <div>
-            <span>数据源</span>
+            <span>数据来源</span>
             <strong id="source-provider">正在连接</strong>
           </div>
           <div>
-            <span>Feed 新鲜度</span>
-            <strong id="feed-freshness">—</strong>
+            <span>数据更新时间</span>
+            <strong id="feed-freshness">等待中</strong>
           </div>
           <div>
             <span>监控对象</span>
@@ -82,22 +82,22 @@
           </div>
           <div>
             <span>下次检查</span>
-            <strong id="next-check">—</strong>
+            <strong id="next-check">等待中</strong>
           </div>
         </section>
 
         <section class="workbench" aria-labelledby="radar-heading">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">signal layer</p>
-              <h2 id="radar-heading">Reset 雷达</h2>
-              <p class="section-description">把普通提及和真实 reset 信号分开，避免每次出现关键词都响铃。</p>
+              <p class="eyebrow">Reset 动态</p>
+              <h2 id="radar-heading">Reset 提醒</h2>
+              <p class="section-description">提到 reset 不等于真的重置了额度。这里只分两种情况：可能要重置，或者已经重置。</p>
             </div>
             <label class="select-label" for="alert-mode">
               提醒条件
               <select id="alert-mode" aria-controls="alerts-list">
-                <option value="possibleAndConfirmed">可能 + 确认</option>
-                <option value="confirmedOnly">仅确认</option>
+                <option value="possibleAndConfirmed">可能重置和已确认</option>
+                <option value="confirmedOnly">只看已确认</option>
               </select>
             </label>
           </div>
@@ -105,8 +105,8 @@
           <div class="workbench-grid">
             <div class="alerts-column">
               <div class="section-meta">
-                <span id="alert-count">0 条信号</span>
-                <span class="muted">仅来自 Tibo 本人</span>
+                <span id="alert-count">0 条 Reset 动态</span>
+                <span class="muted">都由 Tibo 本人发布</span>
               </div>
               <div class="alert-list" id="alerts-list" aria-live="polite" aria-busy="true">
                 <div class="skeleton-row"></div>
@@ -117,40 +117,40 @@
 
             <aside class="source-panel" aria-labelledby="source-heading">
               <div class="source-panel-heading">
-                <p class="panel-label">source contract</p>
-                <h2 id="source-heading">监控边界</h2>
+                <p class="panel-label">@thsottiaux</p>
+                <h2 id="source-heading">我们在看什么</h2>
               </div>
               <dl class="source-facts">
                 <div>
                   <dt>账号</dt>
-                  <dd id="profile-handle">—</dd>
+                  <dd id="profile-handle">等待中</dd>
                 </div>
                 <div>
                   <dt>内容范围</dt>
-                  <dd id="source-scope">—</dd>
+                  <dd id="source-scope">等待中</dd>
                 </div>
                 <div>
                   <dt>最近检查</dt>
-                  <dd id="last-checked">—</dd>
+                  <dd id="last-checked">等待中</dd>
                 </div>
                 <div>
                   <dt>连接状态</dt>
-                  <dd id="retry-state">—</dd>
+                  <dd id="retry-state">等待中</dd>
                 </div>
               </dl>
-              <p class="source-note">只接受规范的 <code>x.com/thsottiaux/status/&lt;id&gt;</code>。回复和引用帖只有在 Tibo 本人发布时才会进入监控。</p>
+              <p class="source-note">动态链接必须属于 <code>x.com/thsottiaux/status/&lt;id&gt;</code>。回复和引用帖也一样，只有 Tibo 本人发布的内容才会收录。</p>
             </aside>
           </div>
         </section>
 
         <div class="error-banner" id="error-banner" role="alert" hidden>
-          <strong>数据源暂时不可用</strong>
-          <span id="error-text">稍后会自动重试。</span>
+          <strong>暂时读不到 Tibo 的动态</strong>
+          <span id="error-text">系统稍后会再试一次。</span>
         </div>
       </main>
 
       <footer class="footer">
-        <span>独立工具 · 偏好和去重记录只保存在本地</span>
+        <span>浏览器只在本地保存提醒偏好和已读记录</span>
         <a href="https://github.com/Chloride233/tibo-reset-watch" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
       </footer>
     </div>
