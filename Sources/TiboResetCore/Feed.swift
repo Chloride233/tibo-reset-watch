@@ -97,7 +97,19 @@ public struct FeedPost: Decodable, Sendable, Equatable {
 
 public enum FeedClient {
     public static let expectedHandle = "thsottiaux"
-    public static let endpoint = URL(string: "https://codex-reset.com/api/feed")!
+    public static let fallbackEndpoint = URL(string: "https://codex-reset.com/api/feed")!
+    public static let endpointDefaultsKey = "feedEndpoint"
+
+    public static var endpoint: URL {
+        guard let value = UserDefaults.standard.string(forKey: endpointDefaultsKey),
+              let url = URL(string: value),
+              let scheme = url.scheme?.lowercased(),
+              ["http", "https"].contains(scheme),
+              url.host != nil else {
+            return fallbackEndpoint
+        }
+        return url
+    }
 
     public static func fetch() async throws -> FeedSnapshot {
         var request = URLRequest(url: endpoint)

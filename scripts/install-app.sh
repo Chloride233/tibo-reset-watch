@@ -18,6 +18,8 @@ fi
 rm -rf "$target_app"
 ditto "$source_app" "$target_app"
 xattr -cr "$target_app"
+# Keep the copied bundle verifiable when Finder metadata was attached to its root.
+xattr -c "$target_app"
 codesign --force --sign - "$target_app"
 codesign --verify --deep --strict "$target_app"
 open "$target_app"

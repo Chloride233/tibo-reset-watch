@@ -1,0 +1,43 @@
+{
+  "name": "tibo-reset-watch-platforms",
+  "version": "0.3.0",
+  "author": "Chloride233",
+  "private": true,
+  "description": "Web and Windows shells for Tibo Reset Watch",
+  "main": "windows/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "windows:build": "electron-builder --win --x64",
+    "web:check": "node --check web/app.js",
+    "stream:check": "node --check server/stream-worker.cjs",
+    "stream:start": "node server/stream-worker.cjs"
+  },
+  "devDependencies": {
+    "electron": "^37.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.chloride233.tiboresetwatch",
+    "productName": "Tibo Reset Watch",
+    "files": [
+      "windows/**/*",
+      "web/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist-windows"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "artifactName": "Tibo-Reset-Watch-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false
+    }
+  }
+}

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#101719" />
+    <meta name="description" content="Tibo Reset Watch：只追踪 @thsottiaux 本人动态，涉及 Codex reset 时提醒。" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>Tibo Reset Watch</title>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="Tibo Reset Watch home">
+          <span class="brand-mark" aria-hidden="true">TR</span>
+          <span>
+            <strong>Tibo Reset Watch</strong>
+            <small>只盯 @thsottiaux</small>
+          </span>
+        </a>
+        <div class="source-indicator" id="source-indicator" data-state="loading" role="status" aria-live="polite">
+          <span class="indicator-dot" aria-hidden="true"></span>
+          <span id="source-state">正在连接 feed</span>
+        </div>
+      </header>
+
+      <main>
+        <section class="intro-grid" aria-labelledby="page-title">
+          <div class="intro-copy">
+            <p class="eyebrow">LIVE / TIBO FEED</p>
+            <h1 id="page-title">只盯 Tibo，<em>reset</em> 才提醒。</h1>
+            <p class="lede">最新动态完整展示，只有命中 reset 规则时才打断你。</p>
+            <div class="action-row">
+              <button class="button button-primary" id="check-now" type="button">立即检查</button>
+              <button class="button button-quiet" id="enable-notifications" type="button">开启系统通知</button>
+            </div>
+            <p class="microcopy" id="updated-meta">等待第一次检查 · feed 约每 15 分钟同步</p>
+          </div>
+
+          <article class="latest-panel" aria-labelledby="latest-heading">
+            <div class="panel-heading">
+              <p class="panel-label">LATEST TIBO POST</p>
+              <span class="post-time" id="latest-time">—</span>
+            </div>
+            <h2 id="latest-heading">最新动态</h2>
+            <p class="latest-text" id="latest-text">正在读取 Tibo 的时间线…</p>
+            <a class="text-link" id="latest-link" href="#" target="_blank" rel="noopener noreferrer" hidden>打开原帖 <span aria-hidden="true">↗</span></a>
+          </article>
+        </section>
+
+        <section class="workbench" aria-labelledby="radar-heading">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">SIGNAL LAYER</p>
+              <h2 id="radar-heading">Reset 雷达</h2>
+            </div>
+            <label class="select-label" for="alert-mode">
+              提醒条件
+              <select id="alert-mode">
+                <option value="possibleAndConfirmed">可能 + 确认</option>
+                <option value="confirmedOnly">仅确认</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="workbench-grid">
+            <div class="alerts-column">
+              <div class="section-meta">
+                <span id="alert-count">0 条信号</span>
+                <span class="muted">作者已校验</span>
+              </div>
+              <div class="alert-list" id="alerts-list" aria-live="polite" aria-busy="true">
+                <div class="skeleton-row"></div>
+                <div class="skeleton-row"></div>
+                <div class="skeleton-row short"></div>
+              </div>
+            </div>
+
+            <aside class="source-panel" aria-labelledby="source-heading">
+              <div class="source-panel-heading">
+                <p class="panel-label">SOURCE CONTRACT</p>
+                <h2 id="source-heading">数据源状态</h2>
+              </div>
+              <dl class="source-facts">
+                <div>
+                  <dt>账号</dt>
+                  <dd id="profile-handle">—</dd>
+                </div>
+                <div>
+                  <dt>范围</dt>
+                  <dd id="source-scope">—</dd>
+                </div>
+                <div>
+                  <dt>最近检查</dt>
+                  <dd id="last-checked">—</dd>
+                </div>
+                <div>
+                  <dt>失败重试</dt>
+                  <dd id="retry-state">—</dd>
+                </div>
+              </dl>
+              <p class="source-note">只接受规范的 <code>x.com/thsottiaux/status/&lt;id&gt;</code>，不会把引用内容当成其他作者的动态。</p>
+            </aside>
+          </div>
+        </section>
+
+        <div class="error-banner" id="error-banner" role="alert" hidden>
+          <strong>数据源暂时不可用</strong>
+          <span id="error-text">稍后会自动重试。</span>
+        </div>
+      </main>
+
+      <footer class="footer">
+        <span>Independent · not affiliated with OpenAI or X</span>
+        <a href="https://github.com/Chloride233/tibo-reset-watch" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      </footer>
+    </div>
+    <script src="config.js"></script>
+    <script src="app.js" defer></script>
+  </body>
+</html>
