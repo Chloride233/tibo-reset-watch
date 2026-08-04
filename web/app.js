@@ -16,6 +16,7 @@ const refs = {
   latestText: document.getElementById("latest-text"),
   latestLink: document.getElementById("latest-link"),
   latestPostKind: document.getElementById("latest-post-kind"),
+  latestPanel: document.querySelector(".latest-panel"),
   alertMode: document.getElementById("alert-mode"),
   alertCount: document.getElementById("alert-count"),
   alertsList: document.getElementById("alerts-list"),
@@ -222,6 +223,11 @@ function setError(message = "") {
   if (message) refs.errorText.textContent = message;
 }
 
+function setLatestPanelState(status) {
+  refs.latestPanel.dataset.state = status;
+  refs.latestPanel.setAttribute("aria-busy", String(status === "loading"));
+}
+
 function retryIntervalMs(failureCount) {
   return Math.min(900_000, 60_000 * (2 ** Math.max(failureCount - 1, 0)));
 }
@@ -249,6 +255,7 @@ function updateLatest(posts) {
     refs.latestPostKind.textContent = "还没有新动态";
     refs.latestPostKind.dataset.level = "other";
     refs.latestLink.hidden = true;
+    setLatestPanelState("empty");
     return;
   }
 
@@ -261,6 +268,7 @@ function updateLatest(posts) {
   refs.latestPostKind.dataset.level = signal?.level || "other";
   refs.latestLink.href = post.url;
   refs.latestLink.hidden = false;
+  setLatestPanelState(signal?.level === "confirmed" ? "confirmed" : signal?.level === "upcoming" ? "possible" : "neutral");
 }
 
 function updateSourceFacts(snapshot, posts) {
@@ -273,13 +281,15 @@ function updateSourceFacts(snapshot, posts) {
   refs.lastChecked.textContent = formatCheckedTime();
   refs.retryState.textContent = "连接正常";
   refs.updatedMeta.textContent = posts[0]?.at
-    ? `最近一条发布于 ${formatTime(posts[0].at)} · ${presentation.cadence}`
-    : `暂时没有动态 · ${presentation.cadence}`;
+    ? `最近一条发布于 ${formatTime(posts[0].at)}，${presentation.cadence}`
+    : `暂时没有动态，${presentation.cadence}`;
 }
 
 function createAlertRow(alert) {
   const row = document.createElement("article");
   row.className = `alert-row ${alert.level}`;
+  const safeId = String(alert.post.id || "unknown").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  row.dataset.odId = `alert-${safeId || "unknown"}-${alert.level}`;
 
   const head = document.createElement("div");
   head.className = "alert-head";
@@ -386,6 +396,8 @@ async function poll() {
   state.polling = true;
   refs.checkNow.disabled = true;
   refs.checkNow.textContent = "检查中…";
+  refs.alertsList.setAttribute("aria-busy", "true");
+  setLatestPanelState("loading");
   state.nextPollAt = null;
   updateCountdown();
   setSourceState("正在读取 Tibo 的动态", "loading");
@@ -427,6 +439,8 @@ async function poll() {
     refs.lastChecked.textContent = formatCheckedTime();
     refs.retryState.textContent = `第 ${state.failures} 次读取失败`;
     refs.feedFreshness.textContent = "读取失败";
+    refs.alertsList.setAttribute("aria-busy", "false");
+    setLatestPanelState("error");
     setSourceState("暂时无法连接", "error");
     setError(`${error.message || "读取时出了点问题"}。系统将在 ${minutes} 分钟后重试。`);
     scheduleNext(delay);
